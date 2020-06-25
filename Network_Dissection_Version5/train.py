@@ -95,7 +95,7 @@ def main(args):
                     best_validation_dsc = mean_dsc
                     best_label_dsc = label_dsc
                     torch.save(unet.state_dict(), os.path.join(args.weights, "unet.pt"))
-                    opt = epoch;
+                    opt = epoch
                 log_valid.append(np.mean(loss_valid))
                 loss_valid = []
                 validation_pred = []
@@ -106,89 +106,6 @@ def main(args):
     plt.plot(log_valid)
     plt.plot(log_train)
     plt.savefig("Test")
-    # torch.save(unet.state_dict(), os.path.join(args.weights, "unet.pt"))
-    print("Best validation mean DSC: {:4f}".format(best_validation_dsc))
-    print(opt);
-    makedirs(args)
-    snapshotargs(args)
-    device = torch.device("cpu" if not torch.cuda.is_available() else args.device)
-
-    loader_train, loader_valid = data_loaders(args)
-    loaders = {"train": loader_train, "valid": loader_valid}
-
-    unet = UNet(in_channels=Dataset.in_channels, out_channels=Dataset.out_channels)
-    # unet.apply(weights_init)
-    unet.to(device)
-
-    dsc_loss = DiceLoss()
-    best_validation_dsc = 0.0
-
-    optimizer = optim.Adam(unet.parameters(), lr=args.lr, weight_decay=1e-4)
-    # optimizer = optim.Adam(unet.parameters(), lr=args.lr)
-
-    # logger = Logger(args.logs)
-    loss_train = []
-    loss_valid = []
-
-    validation_pred = []
-    validation_true = []
-    step = 0
-
-    for epoch in tqdm(range(args.epochs), total=args.epochs):
-        for phase in ["train", "valid"]:
-            if phase == "train":
-                unet.train()
-            else:
-                unet.eval()
-
-
-            for i, data in enumerate(loaders[phase]):
-                if phase == "train":
-                    step += 1
-                x, y_true = data
-                x, y_true = x.to(device), y_true.to(device)
-                optimizer.zero_grad()
-                with torch.set_grad_enabled(phase == "train"):
-                    y_pred = unet(x)
-                    loss = dsc_loss(y_pred, y_true)
-
-                    if phase == "valid":
-                        loss_valid.append(loss.item())
-                        y_pred_np = y_pred.detach().cpu().numpy()
-                        validation_pred.extend(
-                            [y_pred_np[s] for s in range(y_pred_np.shape[0])]
-                        )
-                        y_true_np = y_true.detach().cpu().numpy()
-                        validation_true.extend(
-                            [y_true_np[s] for s in range(y_true_np.shape[0])]
-                        )
-
-                    if phase == "train":
-                        loss_train.append(loss.item())
-                        loss.backward()
-                        optimizer.step()
-
-
-            if phase == "valid":
-                dsc, label_dsc = dsc_per_volume(
-                          validation_pred,
-                          validation_true,
-                          loader_valid.dataset.patient_slice_index,
-                          # loader_train.dataset.patient_slice_index,
-                          )
-                mean_dsc = np.mean(dsc)
-                print(mean_dsc)
-                print(np.array(label_dsc).mean(axis=0))
-
-                if mean_dsc > best_validation_dsc:
-                    best_validation_dsc = mean_dsc
-                    best_label_dsc = label_dsc
-                    torch.save(unet.state_dict(), os.path.join(args.weights, "unet.pt"))
-                    opt = epoch
-                loss_valid = []
-                validation_pred = []
-                validation_true = []
-    # torch.save(unet.state_dict(), os.path.join(args.weights, "unet.pt"))
     print("Best validation mean DSC: {:4f}".format(best_validation_dsc))
     print(opt)
 
@@ -222,13 +139,11 @@ def datasets(args):
         images_dir=args.images,
         subset="train",
         image_size=args.image_size,
-        # transform=transforms(scale=args.aug_scale, angle=args.aug_angle, flip_prob=0.5),
     )
     valid = Dataset(
         images_dir=args.images,
         subset="validation",
         image_size=args.image_size,
-        # random_sampling=False,
     )
     return train, valid
 
