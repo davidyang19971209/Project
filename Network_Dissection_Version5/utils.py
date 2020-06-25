@@ -123,71 +123,30 @@ def normalize_volume(volume):
     return volume
 
 def make_one_hot(mask):
-    class_1 = (mask[:,:,:,0]==0)+0
-    class_2 = (mask[:,:,:,0]==1)+0
-    class_3 = (mask[:,:,:,0]==2)+0
-    class_4 = (mask[:,:,:,0]==4)+0
+    class_1 = (mask[:,:,:,0]==1)+0
+    class_2 = (mask[:,:,:,0]==2)+0
+    class_3 = (mask[:,:,:,0]==4)+0
     
-    # class_2 = class_2+class_4
-
     b,h,w = class_1.shape
 
     class_1 = class_1.reshape(b,h,w,1)
     class_2 = class_2.reshape(b,h,w,1)
     class_3 = class_3.reshape(b,h,w,1)
-    class_4 = class_4.reshape(b,h,w,1)
 
-    result = np.concatenate((class_1,class_2,class_3,class_4),axis=3)
-    # result = np.concatenate((class_1,class_2,class_3),axis=3)
+    result = np.concatenate((class_1,class_2,class_3),axis=3)
     return result
-
-# def make_one_hot(mask):
-#     # class_1 = (mask[:,:,:,0]==0)+0
-#     class_2 = (mask[:,:,:,0]==1)+0
-#     class_3 = (mask[:,:,:,0]==2)+0
-#     # class_4 = (mask[:,:,:,0]==4)+0
-
-#     b,h,w = class_2.shape
-
-#     # class_1 = class_1.reshape(b,h,w,1)
-#     class_2 = class_2.reshape(b,h,w,1)
-#     class_3 = class_3.reshape(b,h,w,1)
-#     # class_4 = class_4.reshape(b,h,w,1)
-
-#     # result = np.concatenate((class_1,class_2,class_3,class_4),axis=3)
-#     result = np.concatenate((class_2,class_3),axis=3)
-#     return result
 
 def convert_mask_to_one(mask):
-    class_1 = (mask[:,:,:,0]== np.max(mask[:,:,:,0]))+0
+    class_1 = (mask[:,:,:,0]!= np.max(mask[:,:,:,0]))+0
     class_2 = (mask[:,:,:,1]!= np.min(mask[:,:,:,1]))+0
     class_3 = (mask[:,:,:,2]!= np.min(mask[:,:,:,2]))+0
-    class_4 = (mask[:,:,:,3]!= np.min(mask[:,:,:,3]))+0
+
 
     b,h,w = class_1.shape
 
     class_1 = class_1.reshape(b,h,w,1)
     class_2 = class_2.reshape(b,h,w,1)
     class_3 = class_3.reshape(b,h,w,1)
-    class_4 = class_4.reshape(b,h,w,1)
 
-    result = np.concatenate((class_1,class_2,class_3,class_4),axis=3)
-    # result = np.concatenate((class_1,class_2,class_3),axis=3)
+    result = np.concatenate((class_1,class_2,class_3),axis=3)
     return result
-
-# def convert_mask_to_one(mask):
-#     class_1 = (mask[:,:,:,0]!= np.min(mask[:,:,:,0]))+0
-#     class_2 = (mask[:,:,:,1]!= np.min(mask[:,:,:,1]))+0
-#     # class_3 = (mask[:,:,:,2]!= np.min(mask[:,:,:,2]))+0
-#     # class_4 = (mask[:,:,:,3]!= np.min(mask[:,:,:,3]))+0
-
-#     b,h,w = class_1.shape
-
-#     class_1 = class_1.reshape(b,h,w,1)
-#     class_2 = class_2.reshape(b,h,w,1)
-#     # class_3 = class_3.reshape(b,h,w,1)
-#     # class_4 = class_4.reshape(b,h,w,1)
-
-#     # result = np.concatenate((class_1,class_2,class_3,class_4),axis=3)
-#     result = np.concatenate((class_1,class_2),axis=3)
-#     return result
