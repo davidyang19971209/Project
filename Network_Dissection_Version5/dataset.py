@@ -7,7 +7,7 @@ from skimage.io import imread
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 
-from utils import crop_sample, pad_sample, resize_sample, normalize_volume, load_nii, make_one_hot, convert_mask_to_one, zca_whitening
+from utils import crop_sample, pad_sample, resize_sample, normalize_volume, load_nii, make_one_hot, convert_mask_to_one
 from IPython import embed
 
 
@@ -24,7 +24,7 @@ class BrainSegmentationDataset(Dataset):
         image_size=256,
         subset="train",
         random_sampling=True,
-        validation_cases=2,
+        validation_cases=0,
         seed=42,
     ):
         assert subset in ["all", "train", "validation"]
@@ -52,22 +52,27 @@ class BrainSegmentationDataset(Dataset):
                     mask_slices.append(load_nii(mask_path))
                     image_slices.append(load_nii(filepath))
 
-            # for filename in sorted(filenames):  
-            #     if (".tif" in filename):
-            #         filepath = os.path.join(dirpath, filename) 
-            #         if "mask" in filename:
-            #             mask_slices.append(imread(filepath, as_gray=True))
-            #         else:
-            #             image_slices.append(imread(filepath))
-                
-            #把一个人的所有图放到一个dictionary里
+            #只筛选带有肿瘤的slice
             if len(image_slices) > 0:
                 patient_id = dirpath.split("/")[-1]
-                # volumes[patient_id] = np.array(image_slices).reshape(4*155,240,240,1)
-                # masks[patient_id] = np.array(mask_slices).reshape(4*155,240,240,1)
-                volumes[patient_id] = np.array(image_slices).reshape(np.array(image_slices).shape[1],240,240,1)
-                masks[patient_id] = np.array(mask_slices).reshape(np.array(mask_slices).shape[1],240,240,1)
-                
+
+                image_array = np.array(image_slices).reshape(np.array(image_slices).shape[1],240,240,1)
+                mask_array = np.array(mask_slices).reshape(np.array(mask_slices).shape[1],240,240,1)
+
+                num_slices = image_array.shape[0]
+
+                image_slices = []
+                mask_slices = []
+
+                for i in range(num_slices):
+                    if(np.sum(mask_array[i,:,:,:])>400):
+                        image_slices.append(image_array[i,:,:,:])
+                        mask_slices.append(mask_array[i,:,:,:])
+
+                volumes[patient_id] = np.array(image_slices)
+                masks[patient_id] = np.array(mask_slices)
+
+
 
         #patient 是一个字典，里面是patient_id和其对应的image(无mask)
         self.patients = sorted(volumes)
@@ -87,13 +92,13 @@ class BrainSegmentationDataset(Dataset):
         print("preprocessing {} volumes...".format(subset))
         # create list of tuples (volume, mask)
         self.volumes = [(volumes[k], masks[k]) for k in self.patients]
-        
+        embed()
 
         # probabilities for sampling slices based on masks
         self.slice_weights = [m.sum(axis=-1).sum(axis=-1).sum(axis=-1) for v, m in self.volumes]
         self.slice_weights = [(s + (s.sum() * 0.1 / len(s))) / (s.sum() * 1.1) for s in self.slice_weights]
         
-        print("one hotting {} volumes...".format(subset))
+        print("one hotting {} masks...".format(subset))
         self.volumes = [(v, make_one_hot(m)) for v,  m in self.volumes]
 
         print("cropping {} volumes...".format(subset))
@@ -107,18 +112,15 @@ class BrainSegmentationDataset(Dataset):
         print("resizing {} volumes...".format(subset))
         # resize
         self.volumes = [resize_sample(v, size=image_size) for v in self.volumes]
-        
-        # print("whitening {} volumes...".format(subset))
-        # # whitening
-        # self.volumes = [(zca_whitening(v),m) for v,m in self.volumes]
-        
+        embed()
+
         print("normalizing {} volumes...".format(subset))
         # normalize channel-wise
         self.volumes = [(normalize_volume(v), m) for v,  m in self.volumes]
 
-        print("converting mask to one of {} volumes...".format(subset))
+        print("one hotting {} masks...".format(subset))
         self.volumes = [(v, convert_mask_to_one(m)) for v,  m in self.volumes]
-        
+        embed()
 
         print("done creating {} dataset".format(subset))
 
