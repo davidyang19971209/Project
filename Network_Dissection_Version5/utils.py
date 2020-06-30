@@ -141,7 +141,6 @@ def convert_mask_to_one(mask):
     class_2 = (mask[:,:,:,1]!= np.min(mask[:,:,:,1]))+0
     class_3 = (mask[:,:,:,2]!= np.min(mask[:,:,:,2]))+0
 
-
     b,h,w = class_1.shape
 
     class_1 = class_1.reshape(b,h,w,1)

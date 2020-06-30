@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr",
         type=float,
-        default=0.0001,
+        default=0.0005,
         help="initial learning rate (default: 0.001)",
     )
     parser.add_argument(
@@ -226,13 +226,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--logs", type=str, default="./logs", help="folder to save logs"
     )
-    # parser.add_argument(
-    #     "--images", type=str, default="./kaggle_3m", help="root folder with images"
-    # )
     parser.add_argument(
-        "--images", type=str, default="C:/Users/david/Desktop/TEST_DATASET/HGG2", help="root folder with images"
-        # "--images", type=str, default="D:/Project/Data/data_2019/MICCAI_BraTS_2019_Data_Training/HGG/BraTS19_TCIA01_131_1", help="root folder with images"
-        
+        # "--images", type=str, default="C:/Users/david/Desktop/TEST_DATASET/HGG2", help="root folder with images"
+        "--images", type=str, default="D:/Project/Data/data_2019/MICCAI_BraTS_2019_Data_Training/HGG/BraTS19_TCIA01_131_1", help="root folder with images"
     )
     parser.add_argument(
         "--image-size",

@@ -14,7 +14,7 @@ from IPython import embed
 class BrainSegmentationDataset(Dataset):
     """Brain MRI dataset for FLAIR abnormality segmentation"""
 
-    in_channels = 1
+    in_channels = 4
     out_channels = 4
 
     def __init__(
@@ -45,34 +45,20 @@ class BrainSegmentationDataset(Dataset):
             for filename in sorted(filter(lambda f: ".gz" in f, filenames)):  
                 if "seg" in filename:
                     mask_path = os.path.join(dirpath,filename)
-
-            for filename in sorted(filter(lambda f: ".gz" in f, filenames)):  
-                filepath = os.path.join(dirpath, filename) 
-                if "flair" in filename:
                     mask_slices.append(load_nii(mask_path))
+                else:
+                    filepath = os.path.join(dirpath, filename) 
                     image_slices.append(load_nii(filepath))
 
+            embed()
             #只筛选带有肿瘤的slice
             if len(image_slices) > 0:
                 patient_id = dirpath.split("/")[-1]
 
-                image_array = np.array(image_slices).reshape(np.array(image_slices).shape[1],240,240,1)
-                mask_array = np.array(mask_slices).reshape(np.array(mask_slices).shape[1],240,240,1)
+                volumes[patient_id] = np.array(image_slices).transpose(1,2,3,0)
+                masks[patient_id] = np.array(mask_slices).transpose(1,2,3,0)
 
-                num_slices = image_array.shape[0]
-
-                image_slices = []
-                mask_slices = []
-
-                for i in range(num_slices):
-                    if(np.sum(mask_array[i,:,:,:])>400):
-                        image_slices.append(image_array[i,:,:,:])
-                        mask_slices.append(mask_array[i,:,:,:])
-
-                volumes[patient_id] = np.array(image_slices)
-                masks[patient_id] = np.array(mask_slices)
-
-
+            embed()
 
         #patient 是一个字典，里面是patient_id和其对应的image(无mask)
         self.patients = sorted(volumes)
@@ -100,14 +86,7 @@ class BrainSegmentationDataset(Dataset):
         
         print("one hotting {} masks...".format(subset))
         self.volumes = [(v, make_one_hot(m)) for v,  m in self.volumes]
-
-        print("cropping {} volumes...".format(subset))
-        # crop to smallest enclosing volume
-        self.volumes = [crop_sample(v) for v in self.volumes]
-
-        print("padding {} volumes...".format(subset))
-        # pad to square
-        self.volumes = [pad_sample(v) for v in self.volumes]
+        embed()
 
         print("resizing {} volumes...".format(subset))
         # resize
@@ -117,6 +96,7 @@ class BrainSegmentationDataset(Dataset):
         print("normalizing {} volumes...".format(subset))
         # normalize channel-wise
         self.volumes = [(normalize_volume(v), m) for v,  m in self.volumes]
+        embed()
 
         print("one hotting {} masks...".format(subset))
         self.volumes = [(v, convert_mask_to_one(m)) for v,  m in self.volumes]
@@ -133,10 +113,9 @@ class BrainSegmentationDataset(Dataset):
             )
         )
 
-
         self.random_sampling = random_sampling
-
         self.transform = transform
+        embed()
 
     def __len__(self):
         return len(self.patient_slice_index)
